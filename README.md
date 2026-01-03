@@ -17,11 +17,14 @@ This is a fully functional chat application that showcases a conversation betwee
 ---
 
 📱 Screenshots & Demo
-### HomeScreen
-![Full Screen](screenshot/home.png)
-### ChatScreen
-![Chat Screen](screenshot/chat1.png)
-![Chat Screen](screenshot/chat2.png)
+### Home Screen
+<img src="screenshot/home.png" alt="Home Screen" width="300"/>
+
+### Chat Screen
+<div style="display: flex; gap: 10px;">
+  <img src="screenshot/chat1.png" alt="Chat Screen 1" width="300"/>
+  <img src="screenshot/chat2.png" alt="Chat Screen 2" width="300"/>
+</div>
 
 ## ✨ Features
 
