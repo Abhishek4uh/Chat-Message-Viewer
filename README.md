@@ -16,6 +16,13 @@ This is a fully functional chat application that showcases a conversation betwee
 
 ---
 
+📱 Screenshots & Demo
+### HomeScreen
+![Full Screen](screenshot/home.png)
+### ChatScreen
+![Chat Screen](screenshot/chat1.png)
+![Chat Screen](screenshot/chat2.png)
+
 ## ✨ Features
 
 ### Core Features ✅
