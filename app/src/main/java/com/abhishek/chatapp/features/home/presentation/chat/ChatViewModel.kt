@@ -37,6 +37,32 @@ class ChatViewModel @Inject constructor(
         loadMessages()
     }
 
+    fun onChatScreenAction(action: ChatScreenAction) {
+        when(action){
+            ChatScreenAction.DismissFullScreenImage -> {
+                dismissFullScreenImage()
+            }
+            ChatScreenAction.OnScrolledToTop -> {
+                onScrolledToTop()
+            }
+            is ChatScreenAction.OnImageClick ->{
+                onImageClick(action.message)
+            }
+            is ChatScreenAction.OnMessageTextChange -> {
+                onMessageTextChange(action.text)
+            }
+            ChatScreenAction.OnScrolledToBottom -> {
+                onScrolledToBottom()
+            }
+            ChatScreenAction.SendButtonClick -> {
+                sendTextMessage()
+            }
+            is ChatScreenAction.SendImage -> {
+                sendImageMessage(action.uri, action.fileSize)
+            }
+        }
+    }
+
     private fun loadMessages() {
         viewModelScope.launch {
             //Seed initial data if first launch
@@ -77,7 +103,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun loadMoreMessages() {
+    private fun loadMoreMessages() {
         if (isLoadingMore || !_uiState.value.hasMoreMessages) return
 
         viewModelScope.launch {
@@ -116,15 +142,15 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun onScrolledToTop() {
+    private fun onScrolledToTop() {
         loadMoreMessages()
     }
 
-    fun onMessageTextChange(text: String) {
+    private fun onMessageTextChange(text: String) {
         _uiState.update { it.copy(messageText = text) }
     }
 
-    fun sendTextMessage() {
+    private fun sendTextMessage() {
         val text = _uiState.value.messageText.trim()
         if (text.isEmpty()) return
 
@@ -157,7 +183,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendImageMessage(uri: Uri, fileSize: Long) {
+    private fun sendImageMessage(uri: Uri, fileSize: Long) {
         viewModelScope.launch {
             val message = Message(
                 id = "msg-${UUID.randomUUID()}",
@@ -226,7 +252,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun onImageClick(message: Message) {
+    private fun onImageClick(message: Message) {
         _uiState.update {
             it.copy(
                 selectedImage = message.file?.path,
@@ -235,7 +261,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun dismissFullScreenImage() {
+    private fun dismissFullScreenImage() {
         _uiState.update {
             it.copy(
                 selectedImage = null,
@@ -244,11 +270,21 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun onScrolledToBottom() {
+    private fun onScrolledToBottom() {
         _uiState.update {
             it.copy(shouldScrollToBottom = false)
         }
     }
+}
+
+sealed interface ChatScreenAction{
+    data object OnScrolledToTop:ChatScreenAction
+    data object OnScrolledToBottom: ChatScreenAction
+    data class SendImage(val uri: Uri, val fileSize: Long): ChatScreenAction
+    data class OnImageClick(val message: Message): ChatScreenAction
+    data class OnMessageTextChange(val text: String): ChatScreenAction
+    data object SendButtonClick: ChatScreenAction
+    data object DismissFullScreenImage: ChatScreenAction
 }
 
 data class ChatUiState(

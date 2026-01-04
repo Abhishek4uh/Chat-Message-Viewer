@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,19 +46,30 @@ import com.abhishek.chatapp.features.home.presentation.commonComponent.FullScree
 import com.abhishek.chatapp.features.home.presentation.commonComponent.MessageInputBar
 import com.abhishek.chatapp.features.home.presentation.commonComponent.MessageItem
 import com.abhishek.chatapp.features.home.presentation.commonComponent.TypingIndicator
+import com.abhishek.chatapp.theme.ChatAppTheme
 
+
+@Composable
+fun ChatScreenRoot(
+    onNavigateBack: () -> Unit,
+    viewmodel: ChatViewModel = hiltViewModel()) {
+
+    val uiState by viewmodel.uiState.collectAsStateWithLifecycle()
+    ChatScreen(
+        onNavigateBack= onNavigateBack,
+        uiState = uiState,
+        onChatScreenAction = viewmodel::onChatScreenAction
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(
-    onNavigateBack: () -> Unit,
-    viewModel: ChatViewModel = hiltViewModel()){
+private fun ChatScreen(
+    uiState:ChatUiState,
+    onChatScreenAction: (ChatScreenAction)-> Unit,
+    onNavigateBack: () -> Unit){
 
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-
-
 
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = maxOf(0, uiState.messages.size - 1)
@@ -67,7 +79,7 @@ fun ChatScreen(
     LaunchedEffect(uiState.messages.size, uiState.shouldScrollToBottom) {
         if (uiState.shouldScrollToBottom && uiState.messages.isNotEmpty()) {
             listState.animateScrollToItem(uiState.messages.size - 1)
-            viewModel.onScrolledToBottom()
+            onChatScreenAction.invoke(ChatScreenAction.OnScrolledToBottom)
         }
     }
 
@@ -76,7 +88,7 @@ fun ChatScreen(
         snapshotFlow { listState.firstVisibleItemIndex }
             .collect { firstVisibleIndex ->
                 if (firstVisibleIndex <= 2 && uiState.hasMoreMessages && !uiState.isLoadingMore) {
-                    viewModel.onScrolledToTop()
+                    onChatScreenAction.invoke(ChatScreenAction.OnScrolledToTop)
                 }
             }
     }
@@ -91,7 +103,7 @@ fun ChatScreen(
             catch (e: Exception) {
                 0L
             }
-            viewModel.sendImageMessage(uri, fileSize)
+            onChatScreenAction.invoke(ChatScreenAction.SendImage(uri, fileSize))
         }
     }
 
@@ -134,7 +146,7 @@ fun ChatScreen(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)){
-                            if (uiState.isLoadingMore) {
+                            if (uiState.isLoadingMore){
                                 item {
                                     Box(
                                         modifier = Modifier
@@ -149,13 +161,19 @@ fun ChatScreen(
                                 }
                             }
 
-                            // Messages
+                            //Messages
                             items(
                                 items = uiState.messages,
                                 key = { it.id }){ message ->
                                 MessageItem(
                                     message = message,
-                                    onImageClick = { viewModel.onImageClick(message) },
+                                    onImageClick = {
+                                        onChatScreenAction.invoke(
+                                            ChatScreenAction.OnImageClick(
+                                                message
+                                            )
+                                        )
+                                    },
                                     modifier = Modifier.animateContentSize(
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -174,12 +192,15 @@ fun ChatScreen(
                         }
                     }
                 }
-
                 //Input Bar
                 MessageInputBar(
                     messageText = uiState.messageText,
-                    onMessageTextChange = viewModel::onMessageTextChange,
-                    onSendClick = viewModel::sendTextMessage,
+                    onMessageTextChange = {
+                        onChatScreenAction.invoke(ChatScreenAction.OnMessageTextChange(it))
+                    },
+                    onSendClick ={
+                        onChatScreenAction.invoke(ChatScreenAction.SendButtonClick)
+                    },
                     onAttachClick = {
                         imagePickerLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -193,8 +214,24 @@ fun ChatScreen(
     //Full screen image viewer
     if (uiState.showFullScreenImage && uiState.selectedImage != null) {
         FullScreenImageViewer(
-            imageUrl = uiState.selectedImage!!,
-            onDismiss = viewModel::dismissFullScreenImage
+            imageUrl = uiState.selectedImage,
+            onDismiss = {
+                onChatScreenAction.invoke(ChatScreenAction.DismissFullScreenImage)
+            }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChatScreenPreview(){
+    ChatAppTheme{
+        ChatScreen(
+            uiState = ChatUiState(
+
+            ),
+            onChatScreenAction = {},
+            onNavigateBack = {}
         )
     }
 }
