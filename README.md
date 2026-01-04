@@ -68,7 +68,7 @@ This project follows **Clean Architecture** principles with clear separation of 
 ### Package Structure
 ```
 chatapp
-├── di                 # Dependency injection (currently empty)
+├── di                 
 ├── ui
 │   └── theme
 │       ├── Type.kt
